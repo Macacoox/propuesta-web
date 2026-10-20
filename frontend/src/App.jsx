@@ -9,11 +9,6 @@ const formatoEuros = new Intl.NumberFormat('es-ES', {
 });
 const euros = (n) => formatoEuros.format(n);
 
-const TIPOS = [
-  { valor: 'landing', nombre: 'Landing', descripcion: 'Una sola página. Incluye la primera página.' },
-  { valor: 'corporativa', nombre: 'Web corporativa', descripcion: 'Web de empresa. Incluye la primera página.' },
-];
-
 export default function App() {
   const [servicioActivo, setServicioActivo] = useState(null);
   const [tarifas, setTarifas] = useState(null);
@@ -54,150 +49,119 @@ export default function App() {
 
   const precio = (clave) => (tarifas ? euros(tarifas[clave]) : '');
 
-  const estado =
-    servicioActivo === null
-      ? { clase: '', texto: 'Comprobando servicio' }
-      : servicioActivo
-        ? { clase: 'ok', texto: 'Servicio disponible' }
-        : { clase: 'ko', texto: 'Servicio no disponible' };
-
   return (
     <div className="pagina">
-      <header className="encabezado">
-        <div>
-          <h1>Presupuesto de proyecto web</h1>
-          <p className="muted">Indique las características del proyecto para obtener un presupuesto desglosado.</p>
-        </div>
-        <span className="badge">
-          <span className={`punto ${estado.clase}`} />
-          {estado.texto}
-        </span>
+      <header className="cabecera">
+        <h1>Presupuesto de proyecto web</h1>
+        <p>Indique las características del proyecto para obtener un presupuesto desglosado.</p>
       </header>
 
-      <main className="rejilla">
-        <form className="card" onSubmit={enviar} noValidate>
-          <div className="card-header">
-            <h2 className="card-title">Datos del proyecto</h2>
-            <p className="card-description">Seleccione el tipo de web, el número de páginas y los servicios adicionales.</p>
+      <main className="contenido">
+        <form className="bloque" onSubmit={enviar} noValidate>
+          <h2>Datos del proyecto</h2>
+
+          <fieldset>
+            <legend>Tipo de web</legend>
+            <label className="opcion">
+              <input type="radio" name="tipo" value="landing" checked={tipo === 'landing'} onChange={() => setTipo('landing')} />
+              Landing <span className="precio">{precio('landing')}</span>
+            </label>
+            <label className="opcion">
+              <input
+                type="radio"
+                name="tipo"
+                value="corporativa"
+                checked={tipo === 'corporativa'}
+                onChange={() => setTipo('corporativa')}
+              />
+              Web corporativa <span className="precio">{precio('corporativa')}</span>
+            </label>
+            <p className="nota">El precio base incluye la primera página.</p>
+          </fieldset>
+
+          <div className="campo">
+            <label htmlFor="paginas">Número de páginas</label>
+            <input id="paginas" type="number" value={paginas} onChange={(e) => setPaginas(e.target.value)} />
+            <p className="nota">Entre 1 y 20. Cada página adicional: {precio('paginaAdicional')}</p>
           </div>
 
-          <div className="card-content">
-            <fieldset className="grupo">
-              <legend className="label">Tipo de web</legend>
-              <div className="opciones">
-                {TIPOS.map(({ valor, nombre, descripcion }) => (
-                  <label key={valor} className="opcion">
-                    <input type="radio" name="tipo" value={valor} checked={tipo === valor} onChange={() => setTipo(valor)} />
-                    <span className="opcion-texto">
-                      <span className="opcion-titulo">{nombre}</span>
-                      <span className="muted">{descripcion}</span>
-                    </span>
-                    <span className="opcion-precio">{precio(valor)}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
+          <fieldset>
+            <legend>Servicios adicionales</legend>
+            <label className="opcion">
+              <input type="checkbox" checked={formulario} onChange={(e) => setFormulario(e.target.checked)} />
+              Formulario de contacto <span className="precio">{precio('formulario')}</span>
+            </label>
+            <label className="opcion">
+              <input type="checkbox" checked={segundoIdioma} onChange={(e) => setSegundoIdioma(e.target.checked)} />
+              Segundo idioma <span className="precio">{precio('segundoIdioma')}</span>
+            </label>
+          </fieldset>
 
-            <div className="grupo">
-              <label className="label" htmlFor="paginas">
-                Número de páginas
-              </label>
-              <input id="paginas" className="input" type="number" value={paginas} onChange={(e) => setPaginas(e.target.value)} />
-              <p className="muted">Entre 1 y 20. Cada página adicional: {precio('paginaAdicional')}.</p>
-            </div>
-
-            <fieldset className="grupo">
-              <legend className="label">Servicios adicionales</legend>
-              <div className="opciones">
-                <label className="opcion">
-                  <input type="checkbox" checked={formulario} onChange={(e) => setFormulario(e.target.checked)} />
-                  <span className="opcion-texto">
-                    <span className="opcion-titulo">Formulario de contacto</span>
-                    <span className="muted">Los visitantes pueden enviar mensajes.</span>
-                  </span>
-                  <span className="opcion-precio">{precio('formulario')}</span>
-                </label>
-                <label className="opcion">
-                  <input type="checkbox" checked={segundoIdioma} onChange={(e) => setSegundoIdioma(e.target.checked)} />
-                  <span className="opcion-texto">
-                    <span className="opcion-titulo">Segundo idioma</span>
-                    <span className="muted">Contenido traducido a otro idioma.</span>
-                  </span>
-                  <span className="opcion-precio">{precio('segundoIdioma')}</span>
-                </label>
-              </div>
-            </fieldset>
-          </div>
-
-          <div className="card-footer">
-            <button type="submit" className="boton" disabled={cargando}>
-              {cargando ? 'Calculando...' : 'Calcular presupuesto'}
-            </button>
-          </div>
+          <button type="submit" disabled={cargando}>
+            {cargando ? 'Calculando...' : 'Calcular presupuesto'}
+          </button>
         </form>
 
-        <section className="card">
-          <div className="card-header">
-            <h2 className="card-title">Presupuesto</h2>
-            <p className="card-description">Calculado por el servidor con sus propias tarifas.</p>
-          </div>
+        <section className="bloque">
+          <h2>Presupuesto</h2>
 
-          <div className="card-content">
-            {!presupuesto && errores.length === 0 && (
-              <div className="vacio">Complete el formulario y pulse «Calcular presupuesto».</div>
-            )}
+          {!presupuesto && errores.length === 0 && (
+            <p className="vacio">Complete el formulario y pulse «Calcular presupuesto».</p>
+          )}
 
-            {errores.length > 0 && (
-              <div className="alerta" role="alert">
-                <p className="alerta-titulo">No se ha podido calcular el presupuesto</p>
-                <ul>
-                  {errores.map((e) => (
-                    <li key={e}>{e}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          {errores.length > 0 && (
+            <div className="error" role="alert">
+              <strong>No se ha podido calcular el presupuesto:</strong>
+              <ul>
+                {errores.map((e) => (
+                  <li key={e}>{e}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-            {presupuesto && (
-              <div className="tabla">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Concepto</th>
-                      <th>Importe</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Precio base</td>
-                      <td>{euros(presupuesto.base)}</td>
-                    </tr>
-                    <tr>
-                      <td>Páginas adicionales</td>
-                      <td>{euros(presupuesto.paginasAdicionales)}</td>
-                    </tr>
-                    <tr>
-                      <td>Formulario de contacto</td>
-                      <td>{euros(presupuesto.formulario)}</td>
-                    </tr>
-                    <tr>
-                      <td>Segundo idioma</td>
-                      <td>{euros(presupuesto.segundoIdioma)}</td>
-                    </tr>
-                  </tbody>
-                  <tfoot>
-                    <tr>
-                      <td>Total</td>
-                      <td>{euros(presupuesto.total)}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            )}
-            {presupuesto && <p className="muted nota">Importes sin impuestos, en {presupuesto.moneda}.</p>}
-          </div>
+          {presupuesto && (
+            <table>
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th>Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Precio base</td>
+                  <td>{euros(presupuesto.base)}</td>
+                </tr>
+                <tr>
+                  <td>Páginas adicionales</td>
+                  <td>{euros(presupuesto.paginasAdicionales)}</td>
+                </tr>
+                <tr>
+                  <td>Formulario de contacto</td>
+                  <td>{euros(presupuesto.formulario)}</td>
+                </tr>
+                <tr>
+                  <td>Segundo idioma</td>
+                  <td>{euros(presupuesto.segundoIdioma)}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td>{euros(presupuesto.total)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+          {presupuesto && <p className="nota">Importes sin impuestos, en {presupuesto.moneda}.</p>}
         </section>
       </main>
+
+      <footer className="pie">
+        Estado del servicio:{' '}
+        {servicioActivo === null ? 'comprobando...' : servicioActivo ? 'disponible' : 'no disponible'}
+      </footer>
     </div>
   );
 }
