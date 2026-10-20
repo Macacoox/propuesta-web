@@ -145,7 +145,7 @@ Las tarifas están en [backend/src/tarifas.js](backend/src/tarifas.js) congelada
         └── components/
             ├── SelectorPaginas.jsx  # botones −/+, número y deslizador
             ├── PanelResultado.jsx   # desglose, total, errores y JSON enviado/recibido
-            ├── Historial.jsx        # barra lateral con los presupuestos calculados
+            ├── BarraLateral.jsx     # barra lateral con las tarifas y los presupuestos calculados
             └── Iconos.jsx           # iconos SVG
 ```
 
@@ -210,6 +210,6 @@ Rutas GET:
 
 Con `npm run dev` arrancado, abre **http://localhost:5173**. El formulario carga los precios desde `/api/tarifas`, envía la solicitud a `/api/presupuesto` y muestra el desglose o los errores que devuelve la API. El frontend no valida a propósito: si escribes 0 o 21 en el número de páginas, verás el mensaje 400 del backend.
 
-La barra lateral izquierda muestra el **historial** de presupuestos calculados. Al pulsar uno se recuperan sus datos y su desglose. El historial se guarda solo en el navegador (`localStorage`): el servidor no almacena presupuestos, como pide el enunciado.
+La barra lateral izquierda muestra las **tarifas** que publica el servidor (`GET /api/tarifas`) y los **presupuestos** calculados. Al pulsar un presupuesto se recuperan sus datos y su desglose. Los presupuestos se guardan solo en el navegador (`localStorage`): el servidor no almacena presupuestos, como pide el enunciado.
 
 Para generar la versión de producción: `npm run build --prefix frontend` (crea `frontend/dist/`).

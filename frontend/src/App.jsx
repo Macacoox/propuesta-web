@@ -4,15 +4,15 @@ import { euros } from './formato.js';
 import { IconoCheck, IconoCorporativa, IconoFormulario, IconoIdioma, IconoLanding } from './components/Iconos.jsx';
 import SelectorPaginas from './components/SelectorPaginas.jsx';
 import PanelResultado from './components/PanelResultado.jsx';
-import Historial from './components/Historial.jsx';
+import BarraLateral from './components/BarraLateral.jsx';
 
-// El historial se guarda solo en el navegador (el servidor no almacena presupuestos)
-const CLAVE_HISTORIAL = 'historial-presupuestos';
-const MAX_HISTORIAL = 30;
+// Los presupuestos calculados se guardan solo en el navegador (el servidor no los almacena)
+const CLAVE_PRESUPUESTOS = 'historial-presupuestos';
+const MAX_PRESUPUESTOS = 30;
 
-function leerHistorial() {
+function leerPresupuestos() {
   try {
-    return JSON.parse(localStorage.getItem(CLAVE_HISTORIAL)) || [];
+    return JSON.parse(localStorage.getItem(CLAVE_PRESUPUESTOS)) || [];
   } catch {
     return [];
   }
@@ -38,16 +38,16 @@ export default function App() {
   const [extras, setExtras] = useState({ formulario: true, segundoIdioma: false });
   const [respuesta, setRespuesta] = useState(null); // { ok, status, datos, solicitud }
   const [cargando, setCargando] = useState(false);
-  const [historial, setHistorial] = useState(leerHistorial);
-  const [entradaActiva, setEntradaActiva] = useState(null);
+  const [presupuestos, setPresupuestos] = useState(leerPresupuestos);
+  const [presupuestoActivo, setPresupuestoActivo] = useState(null);
 
   useEffect(() => {
     try {
-      localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(historial));
+      localStorage.setItem(CLAVE_PRESUPUESTOS, JSON.stringify(presupuestos));
     } catch {
-      // Sin acceso a localStorage: el historial solo dura mientras la página está abierta
+      // Sin acceso a localStorage: la lista solo dura mientras la página está abierta
     }
-  }, [historial]);
+  }, [presupuestos]);
 
   // Consume las rutas GET: estado del servicio y tarifas del servidor
   useEffect(() => {
@@ -69,10 +69,10 @@ export default function App() {
       const resultado = await pedirPresupuesto(solicitud);
       setRespuesta({ ...resultado, solicitud });
       setApiActiva(true);
-      if (resultado.ok) guardarEnHistorial(solicitud, resultado.datos);
-      else setEntradaActiva(null);
+      if (resultado.ok) guardarPresupuesto(solicitud, resultado.datos);
+      else setPresupuestoActivo(null);
     } catch {
-      setEntradaActiva(null);
+      setPresupuestoActivo(null);
       setRespuesta({ ok: false, status: null, datos: { detalles: [ERROR_CONEXION] }, solicitud });
       setApiActiva(false);
     } finally {
@@ -80,38 +80,38 @@ export default function App() {
     }
   }
 
-  function guardarEnHistorial(solicitudEnviada, presupuesto) {
-    const ultima = historial[0];
+  function guardarPresupuesto(solicitudEnviada, presupuesto) {
+    const ultima = presupuestos[0];
     // Si se repite el mismo cálculo seguido, no se duplica
     if (ultima && JSON.stringify(ultima.solicitud) === JSON.stringify(solicitudEnviada)) {
-      setEntradaActiva(ultima.id);
+      setPresupuestoActivo(ultima.id);
       return;
     }
     const entrada = { id: Date.now(), fecha: new Date().toISOString(), solicitud: solicitudEnviada, presupuesto };
-    setHistorial([entrada, ...historial].slice(0, MAX_HISTORIAL));
-    setEntradaActiva(entrada.id);
+    setPresupuestos([entrada, ...presupuestos].slice(0, MAX_PRESUPUESTOS));
+    setPresupuestoActivo(entrada.id);
   }
 
-  // Al pulsar una entrada del historial se recuperan sus datos y su resultado
+  // Al pulsar un presupuesto de la barra lateral se recuperan sus datos y su resultado
   function seleccionarEntrada(entrada) {
     const s = entrada.solicitud;
     setTipo(s.tipo);
     setPaginas(String(s.paginas));
     setExtras({ formulario: s.formulario, segundoIdioma: s.segundoIdioma });
     setRespuesta({ ok: true, status: 200, datos: entrada.presupuesto, solicitud: s });
-    setEntradaActiva(entrada.id);
+    setPresupuestoActivo(entrada.id);
   }
 
-  function borrarHistorial() {
-    setHistorial([]);
-    setEntradaActiva(null);
+  function borrarPresupuestos() {
+    setPresupuestos([]);
+    setPresupuestoActivo(null);
   }
 
   const precio = (clave) => (tarifas ? euros(tarifas[clave]) : '—');
 
   return (
     <div className="app">
-      <Historial entradas={historial} activa={entradaActiva} onSeleccionar={seleccionarEntrada} onBorrar={borrarHistorial} />
+      <BarraLateral tarifas={tarifas} presupuestos={presupuestos} activo={presupuestoActivo} onSeleccionar={seleccionarEntrada} onBorrar={borrarPresupuestos} />
       <div className="pagina">
         <header className="cabecera">
           <div className="marca">
