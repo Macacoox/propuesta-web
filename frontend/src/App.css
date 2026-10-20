@@ -40,7 +40,45 @@ body {
 
 button, input { font: inherit; color: inherit; }
 
-.pagina { max-width: 1120px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+.app { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 100vh; }
+
+.pagina { max-width: 1120px; width: 100%; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+/* ---------- Historial (barra lateral) ---------- */
+.historial {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; padding: 1.5rem 1rem;
+  background: rgba(255, 255, 255, 0.02); border-right: 1px solid var(--panel-borde);
+  backdrop-filter: blur(12px);
+}
+.historial-cabecera { display: flex; align-items: center; gap: 0.5rem; padding: 0 0.25rem; }
+.historial h2 { margin: 0; font-size: 1rem; }
+.contador-historial { font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 999px; color: var(--acento); background: var(--acento-suave); }
+.historial-info { margin: 0.3rem 0.25rem 1.25rem; color: var(--tenue); font-size: 0.78rem; }
+.historial-vacio { margin: 0; padding: 1.5rem 1rem; text-align: center; color: var(--suave); font-size: 0.85rem; border: 1px dashed var(--panel-borde); border-radius: 14px; }
+
+.historial-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.entrada {
+  display: grid; gap: 0.55rem; width: 100%; padding: 0.8rem 0.85rem; text-align: left; cursor: pointer;
+  background: var(--superficie); border: 1px solid var(--panel-borde); border-radius: 14px;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  animation: aparecer 0.3s ease both;
+}
+.entrada:hover { background: var(--superficie-hover); }
+.entrada.activa { border-color: var(--acento); background: var(--acento-suave); box-shadow: 0 8px 24px -12px rgba(139, 108, 255, 0.7); }
+.entrada:focus-visible { outline: 2px solid var(--acento-2); outline-offset: 2px; }
+.entrada-cabecera { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-size: 0.88rem; }
+.entrada-total { font-weight: 800; font-variant-numeric: tabular-nums; background: var(--degradado); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.entrada-reparto { display: flex; gap: 2px; height: 5px; border-radius: 999px; overflow: hidden; }
+.entrada-pie { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.72rem; color: var(--tenue); }
+.etiquetas { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.etiquetas span { padding: 0.05rem 0.4rem; border-radius: 6px; color: var(--color); background: color-mix(in srgb, var(--color) 14%, transparent); font-weight: 600; }
+
+.borrar-historial {
+  margin-top: 1rem; padding: 0.55rem; border-radius: 10px; cursor: pointer; font-size: 0.8rem;
+  color: var(--suave); background: transparent; border: 1px solid var(--panel-borde); transition: color 0.15s, border-color 0.15s;
+}
+.borrar-historial:hover { color: var(--ko); border-color: rgba(248, 113, 113, 0.4); }
 
 /* ---------- Cabecera ---------- */
 .cabecera { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
@@ -269,6 +307,11 @@ li:not(.cero) .importe { color: var(--color); }
 }
 
 /* ---------- Móvil ---------- */
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 1fr; }
+  .historial { position: static; height: auto; max-height: 340px; border-right: 0; border-bottom: 1px solid var(--panel-borde); order: 2; }
+}
+
 @media (max-width: 860px) {
   .rejilla { grid-template-columns: 1fr; }
   .resultado { position: static; }
