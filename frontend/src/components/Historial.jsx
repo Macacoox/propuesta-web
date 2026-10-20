@@ -32,6 +32,9 @@ export default function Historial({ entradas, activa, onSeleccionar, onBorrar })
                   className={`entrada ${entrada.id === activa ? 'activa' : ''}`}
                   onClick={() => onSeleccionar(entrada)}
                 >
+                  <time className="entrada-fecha" dateTime={entrada.fecha}>
+                    {formatoFecha.format(new Date(entrada.fecha))}
+                  </time>
                   <span className="entrada-cabecera">
                     <strong>
                       {s.tipo === 'landing' ? 'Landing' : 'Corporativa'} · {s.paginas} pág.
@@ -43,13 +46,12 @@ export default function Historial({ entradas, activa, onSeleccionar, onBorrar })
                       <span key={clave} style={{ background: color, flexGrow: p[clave] }} />
                     ))}
                   </span>
-                  <span className="entrada-pie">
+                  {(s.formulario || s.segundoIdioma) && (
                     <span className="etiquetas">
                       {s.formulario && <span style={{ '--color': 'var(--c-formulario)' }}>Formulario</span>}
                       {s.segundoIdioma && <span style={{ '--color': 'var(--c-idioma)' }}>2.º idioma</span>}
                     </span>
-                    <time dateTime={entrada.fecha}>{formatoFecha.format(new Date(entrada.fecha))}</time>
-                  </span>
+                  )}
                 </button>
               </li>
             );
