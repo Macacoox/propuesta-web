@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    strictPort: true, // si el puerto está ocupado, falla en vez de cambiar a otro
     // Las peticiones a /api se reenvían al backend Express (puerto 3000),
     // así el navegador no necesita CORS.
     proxy: {

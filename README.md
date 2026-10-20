@@ -138,9 +138,14 @@ Las tarifas están en [backend/src/tarifas.js](backend/src/tarifas.js) congelada
     ├── index.html
     └── src/
         ├── main.jsx         # punto de entrada de React
-        ├── App.jsx          # formulario y resultado
-        ├── api.js           # llamadas fetch a la API
-        └── App.css
+        ├── App.jsx          # formulario y estado de la aplicación
+        ├── api.js           # llamadas fetch a las tres rutas de la API
+        ├── formato.js       # formato de euros
+        ├── App.css
+        └── components/
+            ├── SelectorPaginas.jsx  # botones −/+, número y deslizador
+            ├── PanelResultado.jsx   # desglose, total, errores y JSON enviado/recibido
+            └── Iconos.jsx           # iconos SVG
 ```
 
 ## Pruebas

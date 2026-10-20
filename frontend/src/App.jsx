@@ -1,134 +1,157 @@
-import { useState, useEffect } from 'react';
-import { obtenerTarifas, pedirPresupuesto } from './api.js';
-
-const euros = (n) =>
-  new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+import { useEffect, useState } from 'react';
+import { comprobarEstado, obtenerTarifas, pedirPresupuesto } from './api.js';
+import { euros } from './formato.js';
+import { IconoCheck, IconoCorporativa, IconoFormulario, IconoIdioma, IconoLanding } from './components/Iconos.jsx';
+import SelectorPaginas from './components/SelectorPaginas.jsx';
+import PanelResultado from './components/PanelResultado.jsx';
 
 const TIPOS = [
-  ['landing', 'Landing', 'Una página de impacto'],
-  ['corporativa', 'Corporativa', 'Web completa de empresa'],
+  { valor: 'landing', nombre: 'Landing', desc: 'Una sola página pensada para convertir', Icono: IconoLanding },
+  { valor: 'corporativa', nombre: 'Corporativa', desc: 'Web completa para tu empresa', Icono: IconoCorporativa },
 ];
 
+const EXTRAS = [
+  { clave: 'formulario', nombre: 'Formulario de contacto', desc: 'Recibe mensajes de tus clientes', Icono: IconoFormulario },
+  { clave: 'segundoIdioma', nombre: 'Segundo idioma', desc: 'Tu web traducida a otro idioma', Icono: IconoIdioma },
+];
+
+const ERROR_CONEXION = 'El backend no responde. Arráncalo con "npm run dev" desde la carpeta raíz del proyecto.';
+
 export default function App() {
+  const [apiActiva, setApiActiva] = useState(null);
   const [tarifas, setTarifas] = useState(null);
   const [tipo, setTipo] = useState('corporativa');
   const [paginas, setPaginas] = useState('4');
-  const [formulario, setFormulario] = useState(true);
-  const [segundoIdioma, setSegundoIdioma] = useState(false);
-  const [presupuesto, setPresupuesto] = useState(null);
-  const [errores, setErrores] = useState([]);
+  const [extras, setExtras] = useState({ formulario: true, segundoIdioma: false });
+  const [respuesta, setRespuesta] = useState(null); // { ok, status, datos, solicitud }
   const [cargando, setCargando] = useState(false);
 
-  // Las tarifas se muestran tal como las publica el servidor
+  // Consume las rutas GET: estado del servicio y tarifas del servidor
   useEffect(() => {
+    comprobarEstado().then(setApiActiva);
     obtenerTarifas()
       .then(setTarifas)
-      .catch(() => setErrores(['No se pudo conectar con la API. ¿Está arrancado el backend?']));
+      .catch(() => setTarifas(null));
   }, []);
+
+  // Solo se envían las características; el precio lo calcula el servidor.
+  // No se valida aquí a propósito: así se ven los errores 400 de la API.
+  const solicitud = { tipo, paginas: Number(paginas), ...extras };
+  const desactualizado = respuesta?.ok && JSON.stringify(respuesta.solicitud) !== JSON.stringify(solicitud);
 
   async function enviar(evento) {
     evento.preventDefault();
     setCargando(true);
-    setErrores([]);
-    setPresupuesto(null);
-
-    // Solo se envían las características; el precio lo calcula el servidor.
-    // No se valida aquí a propósito: así se ven los errores 400 de la API.
-    const solicitud = { tipo, paginas: Number(paginas), formulario, segundoIdioma };
-
     try {
-      const resultado = await pedirPresupuesto(solicitud);
-      if (resultado.ok) setPresupuesto(resultado.presupuesto);
-      else setErrores(resultado.errores);
+      setRespuesta({ ...(await pedirPresupuesto(solicitud)), solicitud });
+      setApiActiva(true);
     } catch {
-      setErrores(['No se pudo conectar con la API. ¿Está arrancado el backend?']);
+      setRespuesta({ ok: false, status: null, datos: { detalles: [ERROR_CONEXION] }, solicitud });
+      setApiActiva(false);
     } finally {
       setCargando(false);
     }
   }
 
-  const precio = (clave) => (tarifas ? euros(tarifas[clave]) : '…');
+  const precio = (clave) => (tarifas ? euros(tarifas[clave]) : '—');
 
   return (
-    <main className="contenedor">
-      <header>
-        <p className="etiqueta">Agencia · Calculadora</p>
-        <h1>Presupuesta mi web</h1>
-        <p className="subtitulo">Elige las características y el servidor calcula el precio con sus tarifas.</p>
+    <div className="pagina">
+      <header className="cabecera">
+        <div className="marca">
+          <span className="logo">€</span>
+          <span>Agencia · Calculadora</span>
+        </div>
+        <EstadoApi activa={apiActiva} />
       </header>
 
-      <form className="tarjeta" onSubmit={enviar} noValidate>
-        <fieldset>
-          <legend>Tipo de web</legend>
-          <div className="opciones">
-            {TIPOS.map(([valor, nombre, desc]) => (
-              <label key={valor} className={`opcion ${tipo === valor ? 'activa' : ''}`}>
-                <input type="radio" name="tipo" value={valor} checked={tipo === valor} onChange={() => setTipo(valor)} />
-                <strong>{nombre}</strong>
-                <span>{desc}</span>
-                <em>{precio(valor)}</em>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+      <section className="intro">
+        <h1>
+          Presupuesta <span className="degradado">tu web</span>
+        </h1>
+        <p>Elige las características de tu proyecto y el servidor calcula el precio al momento con sus propias tarifas.</p>
+      </section>
 
-        <fieldset>
-          <legend>Páginas</legend>
-          <div className="paginas">
-            <input type="range" min="1" max="20" value={Number(paginas) || 1} onChange={(e) => setPaginas(e.target.value)} />
-            <input type="number" className="numero" value={paginas} onChange={(e) => setPaginas(e.target.value)} />
-          </div>
-          <p className="ayuda">La primera va incluida. Cada adicional: {precio('paginaAdicional')}</p>
-        </fieldset>
+      <main className="rejilla">
+        <form className="panel formulario" onSubmit={enviar} noValidate>
+          <fieldset>
+            <legend>
+              <span className="paso-num">01</span> Tipo de web
+            </legend>
+            <div className="tipos">
+              {TIPOS.map(({ valor, nombre, desc, Icono }) => (
+                <label key={valor} className={`tarjeta-opcion ${tipo === valor ? 'activa' : ''}`}>
+                  <input type="radio" name="tipo" value={valor} checked={tipo === valor} onChange={() => setTipo(valor)} />
+                  <span className="opcion-icono">
+                    <Icono />
+                  </span>
+                  <span className="marca-check">
+                    <IconoCheck />
+                  </span>
+                  <strong>{nombre}</strong>
+                  <span className="desc">{desc}</span>
+                  <span className="precio">
+                    desde <b>{precio(valor)}</b>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
-        <fieldset>
-          <legend>Extras</legend>
-          <label className="interruptor">
-            <input type="checkbox" checked={formulario} onChange={(e) => setFormulario(e.target.checked)} />
-            <span className="pista" />
-            Formulario de contacto <em>{precio('formulario')}</em>
-          </label>
-          <label className="interruptor">
-            <input type="checkbox" checked={segundoIdioma} onChange={(e) => setSegundoIdioma(e.target.checked)} />
-            <span className="pista" />
-            Segundo idioma <em>{precio('segundoIdioma')}</em>
-          </label>
-        </fieldset>
+          <fieldset>
+            <legend>
+              <span className="paso-num">02</span> Páginas
+            </legend>
+            <SelectorPaginas valor={paginas} onChange={setPaginas} precioAdicional={precio('paginaAdicional')} />
+          </fieldset>
 
-        <button type="submit" disabled={cargando}>
-          {cargando ? 'Calculando…' : 'Calcular presupuesto'}
-        </button>
-      </form>
+          <fieldset>
+            <legend>
+              <span className="paso-num">03</span> Extras
+            </legend>
+            <div className="extras">
+              {EXTRAS.map(({ clave, nombre, desc, Icono }) => (
+                <label key={clave} className={`extra ${extras[clave] ? 'activa' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={extras[clave]}
+                    onChange={(e) => setExtras({ ...extras, [clave]: e.target.checked })}
+                  />
+                  <span className="opcion-icono">
+                    <Icono />
+                  </span>
+                  <span className="extra-texto">
+                    <strong>{nombre}</strong>
+                    <span className="desc">{desc}</span>
+                  </span>
+                  <span className="precio">+{precio(clave)}</span>
+                  <span className="interruptor" aria-hidden="true" />
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
-      {errores.length > 0 && (
-        <section className="tarjeta error" role="alert">
-          <h2>La API ha rechazado la solicitud</h2>
-          <ul>
-            {errores.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+          <button type="submit" className="boton" disabled={cargando}>
+            {cargando ? <span className="girando" /> : null}
+            {cargando ? 'Calculando…' : 'Calcular presupuesto'}
+          </button>
+        </form>
 
-      {presupuesto && (
-        <section className="tarjeta resultado">
-          <h2>Tu presupuesto</h2>
-          <dl>
-            <dt>Precio base</dt>
-            <dd>{euros(presupuesto.base)}</dd>
-            <dt>Páginas adicionales</dt>
-            <dd>{euros(presupuesto.paginasAdicionales)}</dd>
-            <dt>Formulario</dt>
-            <dd>{euros(presupuesto.formulario)}</dd>
-            <dt>Segundo idioma</dt>
-            <dd>{euros(presupuesto.segundoIdioma)}</dd>
-          </dl>
-          <p className="total">
-            Total <strong>{euros(presupuesto.total)}</strong>
-          </p>
-        </section>
-      )}
-    </main>
+        <PanelResultado respuesta={respuesta} cargando={cargando} desactualizado={desactualizado} tarifas={tarifas} />
+      </main>
+
+      <footer className="pie">Las tarifas y el cálculo los controla el servidor · Node.js + Express · React</footer>
+    </div>
+  );
+}
+
+function EstadoApi({ activa }) {
+  const texto = activa === null ? 'Comprobando API…' : activa ? 'API conectada' : 'API desconectada';
+  const clase = activa === null ? 'pendiente' : activa ? 'ok' : 'ko';
+  return (
+    <span className={`estado-api ${clase}`}>
+      <span className="punto" />
+      {texto}
+    </span>
   );
 }
